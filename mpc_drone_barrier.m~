@@ -131,7 +131,7 @@ S = SX.sym('S',1,N);
 %% Lyapunov section
 f_x = A*states + C_aux;
 g_x = B;
-K = 10*[1,0,0,0,0,0,0,0;...
+K = 1*[1,0,0,0,0,0,0,0;...
      0,1,0,0,0,0,0,0;...
      0,0,1,0,0,0,0,0;...
      0,0,0,1,0,0,0,0;...
@@ -160,7 +160,7 @@ st  = X(:,1); % initial state
 
 g = [g;X(:,1)-P(1:8)]; % initial condition constraints
 
-R = 5*eye(size(controls,1));
+R = 10*eye(size(controls,1));
 
 obj = 0;
 %% Barrier Gains
@@ -172,12 +172,12 @@ for k = 1:N
     st = X(:,k);  con = U(:,k);
     
     %% Get lyapunov function
-    h = v_p(st, con) + 0.5*v(st) - 0.0;
+    h = v_p(st, con) + (-0.2*v(st)) + S(:,k);
     
     %% Get barrier function
     b_f = (-T*log(-h/alpha));
     
-    obj = obj+ con'*R*con + b_f + 10*S(:,k)^2;
+    obj = obj + con'*R*con + 50*b_f + 50*S(:,k)^2;
     
     %% Actualizacion del sistema usando Euler runge kutta
     st_next = X(:,k+1);
@@ -192,7 +192,7 @@ for k = 1:N
 end
 
 % se crea el vector de desiscion solo de una columna
-OPT_variables = [reshape(X,8*(N+1),1);reshape(U,4*N,1)];
+OPT_variables = [reshape(X,8*(N+1),1);reshape(U,4*N,1);reshape(S,1*N,1)];
 
 nlprob = struct('f', obj, 'x', OPT_variables, 'g', g, 'p', P);
 
@@ -247,4 +247,7 @@ args.ubx(8*(N+1)+3:4:8*(N+1)+4*N,1) = un_max;  %
 
 args.lbx(8*(N+1)+4:4:8*(N+1)+4*N,1) = w_min;  %
 args.ubx(8*(N+1)+4:4:8*(N+1)+4*N,1) = w_max;  %
+
+args.lbx(8*(N+1)+4*N+1:1:8*(N+1)+4*N+1*N,1) = 0;  %
+args.ubx(8*(N+1)+4*N+1:1:8*(N+1)+4*N+1*N,1) = inf;  %
 end

@@ -172,7 +172,7 @@ for k = 1:N
     st = X(:,k);  con = U(:,k);
     
     %% Get lyapunov function
-    h = v_p(st, con) - 0.2*v(st) + S(:,k);
+    h = v_p(st, con) + (-0.2*v(st)) - S(:, k);
     
     %% Get barrier function
     b_f = (-T*log(-h/alpha));

@@ -127,7 +127,8 @@ P = SX.sym('P',n_states + N*(n_states));
 %% vector que incluye el vector de estados y la referencia
 X = SX.sym('X',n_states,(N+1));
 S = SX.sym('S',1,N);
-
+xref = SX.sym('x_ref', 8, 1);
+xref_p = SX.sym('x_ref_p', 8, 1);
 %% Lyapunov section
 f_x = A*states + C_aux;
 g_x = B;
@@ -139,13 +140,15 @@ K = 1*[1,0,0,0,0,0,0,0;...
      0,0,0,0,0,0,0,0;...
      0,0,0,0,0,0,0,0;...
      0,0,0,0,0,0,0,0];
-V = (1/2)*([x;y;z;th;ul;um;un;w]'*K*[x;y;z;th;ul;um;un;w]);
+V = (1/2)*((xref -states)'*K*(xref - states));
 
 delta_V = jacobian(V,states);
-lyapunov_p = delta_V*f_x + delta_V*g_x*controls;
+delta_V_ref = jacobian(V,xref);
 
-v_p = Function('v_p',{states,controls},{lyapunov_p}); 
-v =  Function('v',{states},{V});
+lyapunov_p = delta_V*f_x + delta_V*g_x*controls + delta_V_ref*xref_p;
+
+v_p = Function('v_p',{states, xref, xref_p, controls},{lyapunov_p}); 
+v =  Function('v',{states, xref},{V});
 %% Vector que representa el problema de optimizacion
 g = [];  % restricciones de estados del problema  de optimizacion
 
@@ -160,8 +163,8 @@ st  = X(:,1); % initial state
 
 g = [g;X(:,1)-P(1:8)]; % initial condition constraints
 
-R = 10*eye(size(controls,1));
-
+R = 1*eye(size(controls,1));
+Q = 1*eye(size(controls,1));
 obj = 0;
 %% Barrier Gains
 T = 10;
@@ -170,14 +173,16 @@ alpha = 0.1;
 for k = 1:N
     
     st = X(:,k);  con = U(:,k);
-    
+    ref = P(8*k+1:8*k+8);
+    %% Control error
+    error = X(1:4,k)-P(8*k+1:8*k+4);
     %% Get lyapunov function
-    h = v_p(st, con) + (-0.2*v(st)) + S(:,k);
+    h = v_p(st, ref, con) + (-0.01*v(st, ref)) - S(:, k);
     
     %% Get barrier function
     b_f = (-T*log(-h/alpha));
     
-    obj = obj + con'*R*con + 50*b_f + 50*S(:,k)^2;
+    obj = obj + con'*R*con + 10*0.9^(k)*(b_f) + 10*S(:,k)^2;
     
     %% Actualizacion del sistema usando Euler runge kutta
     st_next = X(:,k+1);
@@ -248,6 +253,6 @@ args.ubx(8*(N+1)+3:4:8*(N+1)+4*N,1) = un_max;  %
 args.lbx(8*(N+1)+4:4:8*(N+1)+4*N,1) = w_min;  %
 args.ubx(8*(N+1)+4:4:8*(N+1)+4*N,1) = w_max;  %
 
-args.lbx(8*(N+1)+4*N+1:1:8*(N+1)+4*N+1*N,1) = 0;  %
+args.lbx(8*(N+1)+4*N+1:1:8*(N+1)+4*N+1*N,1) = -inf;  %
 args.ubx(8*(N+1)+4*N+1:1:8*(N+1)+4*N+1*N,1) = inf;  %
 end

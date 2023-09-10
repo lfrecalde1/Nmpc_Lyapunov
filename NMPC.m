@@ -1,11 +1,11 @@
-function [H0, control, slack] = NMPC(h, v, hd, k, H0, vc, S, args, solver ,N)
+function [H0, control, slack] = NMPC(h, v, hd, hdp, k, H0, vc, S, args, solver ,N)
 %UNTITLED Summary of this function goes here
 %   Detailed explanation goes here
 H = [h;v];
 args.p(1:8) = H;
 
 for i = 1:N
-    args.p(8*i+1:8*i+8)=[hd(:,k+i),hd(:,k+i)];
+    args.p(8*i+1:8*i+8)=[hd(:,k+i),hdp(:,k+i)];
 end
 
 args.x0 = [reshape(H0',8*(N+1),1);reshape(vc',size(vc,2)*N,1);reshape(S',size(S,2)*N,1)]; % initial value of the optimization variables

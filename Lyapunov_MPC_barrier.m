@@ -40,7 +40,7 @@ v1 = [0;...
 H = [h1;v1];
 
 %% Variables definidas por la TRAYECTORIA y VELOCIDADES deseadas
-[xd, yd, zd, psid, xdp, ydp, zdp, psidp] = Trayectorias(1,t);
+[xd, yd, zd, psid, xdp, ydp, zdp, psidp] = Trayectorias(3,t);
 
 %% GENERALIZED DESIRED SIGNALS
 hd1 = [xd; yd; zd; psid];
@@ -79,14 +79,14 @@ for k = 1:1:length(t)-N
     he1(:, k) = hd1(1:4,k)-h1(1:4,k);
     
     %% MPC Controller
-    [H0, control, slack] = NMPC(h1(:,k), v1(:,k), hd1(:,:), k, H0, vc, s, args, solver, N);
+    [H0, control, slack] = NMPC(h1(:,k), v1(:,k), hd1(:,:), hdp1(:, :), k, H0, vc, s, args, solver, N);
         
     optimal_control(:, k) = control(1, :)';
     
     %% GET VALUES OF DRONE
     %% Drone 1
-    value_l_p = V_p([h1(:,k);v1(:,k)], optimal_control(:, k));
-    value_l(k) = full(V([h1(:,k);v1(:,k)]));
+    value_l_p = V_p([h1(:,k);v1(:,k)], [hd1(:,k);0;0;0;0], [hdp1(:,k);0;0;0;0], optimal_control(:, k));
+    value_l(k) = full(V([h1(:,k);v1(:,k)], [hd1(:,k);0;0;0;0]));
 
     v1(:,k+1) = system_dynamic(chi, v1(:,k), control(1, :)', ts);
     [h1(:,k+1)] = system_drone(h1(:,k), v1(:,k), ts, L1);

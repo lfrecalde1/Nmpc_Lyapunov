@@ -5,8 +5,8 @@ mul=1;
      switch n
    % a)Trayectoria Churo     
         case 1   
-            xd = 5*ones(1, length(t));         xd_p = 0*ones(1, length(t));     
-            yd = 5*ones(1, length(t));         yd_p = 0*ones(1, length(t));     
+            xd = 1*ones(1, length(t));         xd_p = 0*ones(1, length(t));     
+            yd = 1*ones(1, length(t));         yd_p = 0*ones(1, length(t));     
             zd = 4.5*ones(1, length(t));         zd_p = 0*ones(1, length(t));
             % b) Trayectoria seno
         case 2 
@@ -15,10 +15,10 @@ mul=1;
             zd= 2 * ones(1,length(t)) +4;     zd_p= 0 * ones(1,length(t)); 
    % c) Trayectoria de un 8 
         case 3
-            Q = 0.2;
+            Q = 0.5;
             xd = 4 * sin(mul*0.04*t);         xd_p = 4*mul*0.04*cos(mul*0.04*t);     xd_pp = -4*mul*mul*0.04*0.04*sin(mul*0.04*t);
             yd = 4 * sin(mul*0.08*t);         yd_p = 4*mul*0.08*cos(mul*0.08*t);     yd_pp = -4*mul*mul*0.08*0.08*sin(mul*0.08*t);               
-            zd = 1.5 * cos (Q * t) + 3 ;             zd_p = -1.5*Q*sin(Q*t);
+            zd = 1 * sin (Q * t) + 3 ;             zd_p = Q*cos(Q*t);
    % d) Trayectoria Silla de Montar
         case 4  
             xd= 5 * cos(0.05*t) + 5;                xd_p=-0.25*sin(0.05*t);           xd_pp=-0.0125*cos(0.05*t);

@@ -1,4 +1,4 @@
-function [f,solver,args, v_p, v] = mpc_drone_barrier(bounded, N, L, ts, chi)
+function [f,solver,args, v_p, v, safety_f] = mpc_drone_barrier(bounded, N, L, ts, n, ax)
 
 addpath('/home/fer/casadi-linux-matlabR2014b-v3.4.5');
 import casadi.*;
@@ -149,6 +149,14 @@ lyapunov_p = delta_V*f_x + delta_V*g_x*controls + delta_V_ref*xref_p;
 
 v_p = Function('v_p',{states, xref, xref_p, controls},{lyapunov_p}); 
 v =  Function('v',{states, xref},{V});
+
+%% Obstacles Section
+gauss_f = exp(-((z - 3)^n)/ax);
+delta_gauss = jacobian(gauss_f, states);
+gauss_p = delta_gauss*f_x + delta_gauss*g_x*controls;
+
+safety_f = Function('safety_f',{states},{gauss_f});
+safety_f_p = Function('safety_f_p',{states, controls},{gauss_p});
 %% Vector que representa el problema de optimizacion
 g = [];  % restricciones de estados del problema  de optimizacion
 
@@ -178,12 +186,19 @@ for k = 1:N
     %% Control error
     error = X(1:4,k)-P(8*k+1:8*k+4);
     %% Get lyapunov function
-    h = v_p(st, ref, ref_p, con) + (-0.1*v(st, ref)) - S(:, k);
+    h = v_p(st, ref, ref_p, con) + (-0.5*v(st, ref)) - S(:, k);
     
-    %% Get barrier function
+    %% Get barrier function Lyapunov
     b_f = (-T*log(-h/alpha));
     
-    obj = obj + con'*R*con + 10*0.9^(k)*(b_f) + 10*S(:,k)^2;
+    %% Safety Region
+    h_s = -safety_f_p(st, con) + (-0.5*safety_f(st));
+    
+    %% Get barrier
+    b_s = (-T*log(-h_s/alpha));
+    
+    %% Cost Function
+    obj = obj + con'*R*con + 10*0.9^(k)*(b_f) + 1*S(:,k)^2 + 0.00*b_s;
     
     %% Actualizacion del sistema usando Euler runge kutta
     st_next = X(:,k+1);
